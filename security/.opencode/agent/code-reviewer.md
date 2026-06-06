@@ -33,8 +33,17 @@ Lee y respeta estos archivos del plugin:
 ## Contexto que recibes
 El flujo te pasa: `[audit_id]`, `[source_code_path]` (raíz principal), `[source_code_paths]`
 (una o varias raíces del proyecto — frontend, backend, otras —, coma-separadas; puede venir
-solo `[source_code_path]`), `[language]`, `[framework]`, `[asset_type]` y la ruta `audits/{dir}/`.
+solo `[source_code_path]`), `[scope]` (`type` = full | module, `code_paths`, `desc`),
+`[language]`, `[framework]`, `[asset_type]` y la ruta `audits/{dir}/`.
 **Analiza el código de TODAS las raíces recibidas**, no solo una.
+
+**Alcance (`[scope]`):**
+- `type=full` (o sin scope) → revisa todo el proyecto normalmente.
+- `type=module` → **enfoca los findings y las directivas en `code_paths`** (el módulo que el dev
+  pidió). El resto del proyecto se usa solo como **contexto** (entender llamadas, modelos y
+  dependencias que el módulo consume); no generes findings sobre código fuera del módulo, salvo
+  que sea una vulnerabilidad alcanzable directamente desde el módulo (en ese caso, anótalo y
+  avisa). Deja constancia en la salida de que la revisión fue acotada al módulo `{desc}`.
 
 ## Flujo de ejecución
 

@@ -190,6 +190,8 @@ interface AuditRun {
   targets:      Targets;         // al menos una clave presente
   audit_type:   AuditType;       // APROBACION_ACTIVOS | RETEST_APROBACION
   modality:     Modality;        // normalmente WHITE_BOX (activo propio)
+  scope_type?:   "full" | "module";  // full = toda la app; module = solo una parte
+  scope_detail?: string | null;      // descripción del módulo + carpetas/prefijos (si module)
 
   // -- Repositorio (clave para el futuro gate de CI) --
   repository_url: string | null;
@@ -267,6 +269,8 @@ interface AuditRun {
   "targets":        {},
   "audit_type":     "APROBACION_ACTIVOS",
   "modality":       "WHITE_BOX",
+  "scope_type":     "full",
+  "scope_detail":   null,
   "repository_url": null,
 
   "qa":        { "name": "", "email": "" },

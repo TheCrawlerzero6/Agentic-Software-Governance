@@ -230,17 +230,19 @@ solo para informar las preguntas). Recorrer **TODAS las raíces** de `roots`. Ex
 - **Integraciones externas**: pasarelas de pago, SMS/email, APIs de terceros, colas, storage.
 - **Operaciones sensibles**: DELETE, transferencias/movimientos de dinero, exportaciones masivas.
 
-**2.3 — Mostrar al dev lo que se entendió** (para confirmar y enmarcar las preguntas):
+**2.3 — Mostrar al dev lo que se entendió** (para confirmar y enmarcar las preguntas).
+Este recap es **lo que será tenido en cuenta para las pruebas**; preséntalo SIEMPRE antes de
+las preguntas extra (STEP 3.5+):
 ```
-🔎 Esto entendí de tu código:
+🔎 Esto identifiqué en tu código (es lo que tendré en cuenta para las pruebas):
    • Stack: {lenguaje}/{framework} + {DB}
    • Endpoints: {N} (ej. {2-3 ejemplos})
-   • Roles detectados: {admin, user, ...}  (o "no detecté roles explícitos")
+   • Roles detectados: {cantidad} → {admin, user, ...}  (o "no detecté roles explícitos")
    • Datos sensibles: {PII / financiero / ninguno aparente}
    • Integraciones: {pasarela X, SMS Y, ...}
    • Operaciones sensibles: {pago, borrado, ...}
 
-Te haré unas preguntas puntuales sobre lo que el código no me dice.
+Ahora te haré unas preguntas puntuales sobre lo que el código no me dice.
 ```
 
 ### STEP 3 — Detectar el target a probar (dinámico)
@@ -257,6 +259,43 @@ o pedir que levante la app. Confirmar el tipo con un request (`curl -sk -D -` �
 canal (web_widget / http_api / whatsapp / telegram / otro), URL o endpoint, idioma (es/en),
 y si tiene RAG / herramientas / memoria. Guardar en `targets.chatbot`. Luego el comando seguirá
 `@reference/pentest-chatbot.md`.
+
+---
+
+### STEP 3.5 — Alcance de la auditoría (toda la app vs. un módulo)
+
+El dev YA entregó la carpeta completa del proyecto en STEP 2.1. Aquí solo se acota **qué probar**.
+Es la primera de las preguntas extra, justo después del recap. Mostrar el menú:
+```
+¿Qué quieres que audite?
+1. Toda la aplicación
+2. Solo un módulo / parte específica
+   (recomendado para apps grandes o cuando solo quieres revisar algo nuevo)
+```
+
+- **Opción 1** → `scope = { "type": "full", "description": "", "code_paths": [], "route_prefixes": [] }`.
+  Continuar al STEP 4.
+- **Opción 2** → pedir una **descripción libre** del módulo:
+  ```
+  Descríbeme el módulo o parte que quieres que pruebe.
+  Ej: "el módulo de pagos nuevo", "el panel de administración", "el flujo de registro".
+  ```
+  Con el código ya leído en STEP 2.2, **mapear** la descripción a carpetas y/o prefijos de ruta
+  y **confirmarlo** con el dev (trust-but-verify):
+  ```
+  Entiendo que el módulo es: {descripción}. En el código lo veo aquí:
+    • Carpetas: {src/payments, ...}
+    • Endpoints: {/api/payments/*, ...}
+  ¿Es correcto? (sí / ajustar)
+  ```
+  Guardar `scope = { "type": "module", "description", "code_paths": [...], "route_prefixes": [...] }`.
+
+> **Regla de alcance (trust-but-verify):** el recon (STEP 2.2) y el code review mantienen TODO
+> el proyecto como **contexto** (para entender llamadas y dependencias), pero los hallazgos y las
+> pruebas se **enfocan** en el módulo. Si el módulo llama a código fuera de sus carpetas, se
+> incluye ese código en el análisis y se avisa al dev. El scope acota la cobertura, pero NO baja
+> el criterio de las pruebas dentro del módulo. Si la descripción no mapea a ninguna carpeta/ruta
+> real, avisar y pedir que la precise (no asumir).
 
 ---
 
@@ -437,17 +476,27 @@ Guardar en `environment` (`environment_type`: development | test | production, `
 > aunque el dev haya dicho "test", **confírmalo y trátalo como producción** (gate conservador).
 > No te fíes solo de la respuesta verbal.
 
-**6b — Endpoints/acciones que NO tocar**:
+**6b — Restricciones: qué NO tocar** (vinculante — los pentesters lo respetan):
 ```
-¿Hay endpoints o acciones que NO debo tocar? (ej. pagos reales, envío de SMS, borrados masivos)
-1. No, prueba todo    2. Sí — dime cuáles
+¿Hay algo que NO debo tocar durante las pruebas? Por ejemplo:
+   • No eliminar/modificar registros (solo lectura)
+   • No tocar una integración específica (ej. la pasarela de pago, el envío de SMS/email)
+   • No ejecutar acciones masivas (borrados o exportaciones grandes)
+   • Un endpoint o módulo concreto que debo dejar fuera
+
+1. No, puedes probar todo    2. Sí — dime qué dejar fuera
 ```
-Guardar en `constraints.restricted_endpoints`. (Las integraciones con costo ya las capturaste
-en STEP 4e → `constraints.external_services`; confirma aquí si falta alguna.)
+Guardar las restricciones:
+- Endpoints/acciones a excluir → `constraints.restricted_endpoints`.
+- Integraciones que no se deben disparar → `constraints.external_services` (las de costo ya las
+  capturaste en STEP 4e; confirma aquí si falta alguna).
+- Si el dev pide "no eliminar / no escribir / solo lectura" → `constraints.no_destructive: true`.
 > **Validar:** que cada endpoint/acción restringida exista en el código (si el dev escribe
 > uno que no existe, aclararlo). Y al revés: si el código tiene operaciones de alto impacto
 > (pagos, borrados) que el dev no listó, recordárselas para decidir si las excluye — no las
-> ejecutes a ciegas.
+> ejecutes a ciegas. Estas restricciones se pasan a los pentesters y son de cumplimiento
+> OBLIGATORIO: lo restringido NO se prueba (queda anotado como "no verificado por restricción
+> del dev", no como ausencia de hallazgo).
 
 ### STEP 7 — Resumen y confirmación
 
@@ -459,11 +508,12 @@ App / activo:  {nombre} ({asset_type})                  ← auto-detectado (web/
 Código:        {raíces con su rol — ej. frontend: ../web · backend: ../api} ({lenguaje}/{framework} + {DB})
 Repo:          {repository_url}                          ← omitir si vacío
 Exposición:    {internet / interna} · Usuarios: {base} (~{cantidad})
-Roles:         {roles} — con credenciales: {los que se obtuvieron}
+Alcance:       {Toda la app  |  Módulo: {descripción} ({carpetas} · {prefijos de ruta})}
+Roles:         {cantidad} {roles} — con credenciales: {los que se obtuvieron}
 Datos sensibles: {PII / financiero / ...}
 Reglas críticas: {1-2 que el dev marcó}
 Ambiente:      {desarrollo (local) / test / producción} · datos de prueba: {sí/no} · backup: {sí/no}
-No tocar:      {restricciones}
+No tocar:      {restricciones — endpoints/acciones excluidas, integraciones, solo-lectura}
 Modalidad:     Caja Blanca
 
 Fases:
@@ -513,6 +563,12 @@ Al completar el intake, retornar JSON estructurado:
       {"role": "user",  "user": "user2@test.com", "secret": "..."}
     ]
   },
+  "scope": {
+    "type": "full|module",                       // full = toda la app; module = solo una parte
+    "description": "el módulo de pagos nuevo",     // "" si type=full
+    "code_paths": ["src/payments"],                // carpetas mapeadas y confirmadas (vacío si full)
+    "route_prefixes": ["/api/payments"]            // prefijos de ruta del módulo (si aplica)
+  },
   "business_context": {
     "exposure": "internet|internal",
     "user_base": "publico|clientes|empleados|equipo_limitado",
@@ -528,9 +584,10 @@ Al completar el intake, retornar JSON estructurado:
     "has_backup": true
   },
   "constraints": {
-    "external_services": ["pasarela X"],
-    "real_data": false,
-    "restricted_endpoints": []
+    "external_services": ["pasarela X"],           // integraciones que NO se deben disparar
+    "restricted_endpoints": ["/api/admin/wipe"],   // endpoints/acciones que NO se prueban
+    "no_destructive": false,                        // true = solo lectura (no DELETE/escrituras)
+    "real_data": false
   },
   "confirmed": true
 }
@@ -562,6 +619,13 @@ Posibles valores de `reason` cuando `confirmed == false`:
   ejemplos y opciones, ancladas en lo detectado (ej. "vi los roles X/Y, ¿qué NO debería ver Y?").
 - **Credenciales por rol:** pide una cuenta por rol; si no se pueden crear automáticamente,
   explica exactamente qué se necesita para un pentest de calidad.
+- **Recap antes de preguntar:** muestra SIEMPRE lo identificado en el código (STEP 2.3) antes de
+  las preguntas extra (alcance, roles, restricciones).
+- **Alcance:** el scope acota la cobertura (toda la app vs. un módulo) pero NO baja el criterio
+  dentro de lo que sí se prueba. La carpeta completa del proyecto siempre es obligatoria.
+- **Restricciones vinculantes:** lo que el dev marque como "no tocar" (endpoints, integraciones,
+  no destructivo) se pasa a los pentesters y se respeta; lo restringido se anota como "no
+  verificado por restricción", nunca como ausencia de hallazgo.
 - UNA pregunta a la vez. Explicar con lenguaje simple, sin jerga (BOLA/IDOR/BFLA).
 - Si el dev da toda la info de golpe, confirmar y no repetir preguntas.
 - Si el dev dice "no tengo código" (web/api), NO continuar (Caja Blanca obligatoria).

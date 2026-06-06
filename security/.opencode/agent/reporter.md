@@ -39,6 +39,8 @@ completed_at: {completed_at}
 
 **Fecha:** {YYYY-MM-DD} · **Ejecutado por:** {dev} · **Departamento:** {departamento}
 **App:** {nombre_app} ({framework}) en {url} · **Modalidad:** Caja Blanca
+**Alcance:** {Toda la aplicación | Módulo: {scope_detail}}
+{**No verificado por restricción del dev:** {restrictions} — solo si hay restricciones}
 
 ## Dictamen
 > {🟢 SE APRUEBA / 🟠 SE APRUEBA CON CONDICIONES / 🔴 NO SE APRUEBA EL PASO A PRODUCCIÓN}
@@ -111,7 +113,8 @@ sincronizar, intentar enviarlos; si el gateway no responde, **NO** generar el re
 
 ### PASO 1 — Obtener datos
 `get_audit_findings(audit_id)` + `get_audits()` (para `dictamen`, `dictamen_conditions`,
-`retest_comparison`, `audit_type`, `repository_url`, `completed_at`).
+`retest_comparison`, `audit_type`, `repository_url`, `completed_at`, `scope_type`,
+`scope_detail`, `restrictions`).
 
 ### PASO 2 — Ordenar y calcular métricas
 Ordenar por severidad (CRITICAL→INFO) y CVSS desc. Renumerar `display_id` sin saltos.
@@ -170,5 +173,9 @@ Para cuando se generó el reporte, la consolidación ya dejó las severidades ho
   MISMO lenguaje del proyecto.
 - Lenguaje dev-friendly: el reporte debe ser accionable leyéndolo solo.
 - El dictamen lo calcula el gateway al `AUDIT_COMPLETED`; aquí solo se muestra.
+- **Reflejar alcance y restricciones:** muestra el `Alcance` (toda la app / módulo) en el
+  encabezado. Lo que no se probó por restricción del dev o por estar fuera del módulo se reporta
+  como **"no verificado"** (en la cabecera y/o en "Categorías OWASP no cubiertas"), NUNCA como
+  control limpio ni como ausencia de vulnerabilidad.
 - En findings Corregidos, mostrar la nota de mitigación (`analyst_review.comment`) — es la
   traza de la mitigación.

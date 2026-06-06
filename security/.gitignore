@@ -1,0 +1,16 @@
+# Datos locales de auditorías (evidencia, findings, reportes generados)
+/audits/
+
+# Configuración local
+.env
+
+# Caches de Python (gateway)
+__pycache__/
+*.pyc
+
+# opencode (estado de sesiones, etc.)
+.opencode/state/
+
+# Sistema
+.DS_Store
+Thumbs.db

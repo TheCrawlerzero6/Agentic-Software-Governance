@@ -1,0 +1,116 @@
+name: pentesting-open-code
+
+# Pentesting para Desarrolladores — entorno 100% local.
+# Levanta todo con:  docker compose up -d
+#
+#   kali     (5000)  — herramientas de pentesting, expuestas como MCP (stdio vía docker exec)
+#   browser  (3478)  — automatización de navegador (Playwright/Chromium) como MCP (HTTP/SSE)
+#   gateway  (3480)  — persistencia de auditorías/findings como MCP (HTTP, SIN auth)
+#   mongodb  (interno) — base de datos local de las auditorías
+#
+# kali y browser usan restart "no" (se usan bajo demanda durante una auditoría).
+# gateway y mongodb usan restart "unless-stopped" (guardan tu historial de auditorías).
+
+services:
+  kali:
+    build: ./containers/kali
+    container_name: pentesting-kali
+    ports:
+      - "5000:5000"
+    networks:
+      - pentesting
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2"
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  browser:
+    build: ./containers/browser
+    container_name: pentesting-browser
+    ports:
+      - "3478:3478"
+    volumes:
+      - ./audits:/audits
+    networks:
+      - pentesting
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1"
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3478/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:7.0
+    container_name: pentesting-mongodb
+    volumes:
+      - mongodb_data:/data/db
+      # Aplica los validadores $jsonSchema en la primera inicialización de la BD.
+      - ./containers/gateway/init-mongo-schema.js:/docker-entrypoint-initdb.d/init-mongo-schema.js:ro
+    networks:
+      - pentesting
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  gateway:
+    build: ./containers/gateway
+    container_name: pentesting-gateway
+    ports:
+      - "3480:3480"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/pentest_audits
+      - MONGODB_DATABASE=pentest_audits
+      - AUTH_MODE=local
+      - AUDIT_OWNER=${AUDIT_OWNER:-local}
+      - GATEWAY_PORT=3480
+      - PUBLIC_PATH_PREFIX=
+      - DAILY_AUDIT_LIMIT=0
+      - ALLOWED_TARGET_DOMAINS=${ALLOWED_TARGET_DOMAINS:-}
+      - TZ_OFFSET_HOURS=${TZ_OFFSET_HOURS:-0}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - pentesting
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "1"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3480/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  pentesting:
+    driver: bridge
+
+volumes:
+  mongodb_data:

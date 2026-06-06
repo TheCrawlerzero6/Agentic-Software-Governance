@@ -1,6 +1,6 @@
 # Pentesting para Desarrolladores — versión opencode (100% local)
 
-Plugin de pentesting **self-service** para [opencode](https://opencode.ai): audita la seguridad
+Agentes y skills de pentesting **self-service** para [opencode](https://opencode.ai): audita la seguridad
 de tus propias aplicaciones desde tu máquina, combinando **revisión de código** (Caja Blanca) y
 **pruebas dinámicas** OWASP (Web, API, chatbots/LLM y workflows/nodos de n8n). Te explica cada
 vulnerabilidad en lenguaje simple, con un ejemplo de cómo la aprovecharía un atacante, y te ayuda
@@ -9,7 +9,7 @@ a corregirla.
 Todo corre en **local con Docker**: clonas el repo, levantas los contenedores y empiezas. **No hay
 servidor remoto ni autenticación** — tus auditorías y hallazgos se guardan en una MongoDB local.
 
-> ⚠️ **Solo en entornos locales o de prueba.** El plugin ejecuta ataques reales que pueden crear,
+> ⚠️ **Solo en entornos locales o de prueba.** Estos agentes ejecutan ataques reales que pueden crear,
 > editar y eliminar datos. Nunca lo uses contra producción. Ten un backup de tu base de datos.
 
 ---

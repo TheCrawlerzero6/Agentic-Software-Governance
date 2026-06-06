@@ -5,8 +5,8 @@ para usarse en local sobre tus propios repositorios:
 
 | Componente | Qué es | Para qué sirve |
 |---|---|---|
-| **[Gobernanza por Evidencia](#gobernanza-por-evidencia-governance)** (`governance/`) | Skill de **Claude Code** | Revisar y documentar un repo (arquitectura, decisiones, deuda) con evidencia trazable. |
-| **[Pentesting para Desarrolladores](#pentesting-para-desarrolladores-security)** (`security/`) | Plugin de **opencode** (Docker) | Auditar la seguridad de tus apps: revisión de código + pruebas dinámicas OWASP. |
+| **[Gobernanza por Evidencia](#gobernanza-por-evidencia-governance)** (`governance/`) | Skill de **opencode** | Revisar y documentar un repo (arquitectura, decisiones, deuda) con evidencia trazable. |
+| **[Pentesting para Desarrolladores](#pentesting-para-desarrolladores-security)** (`security/`) | Agentes y skills de **opencode** (Docker) | Auditar la seguridad de tus apps: revisión de código + pruebas dinámicas OWASP. |
 
 Ambos son **self-service y 100% locales**: no hay servidor remoto y no modifican tu
 código fuente; sus salidas quedan fuera de git (ver [Datos locales](#datos-locales)).
@@ -15,7 +15,7 @@ código fuente; sus salidas quedan fuera de git (ver [Datos locales](#datos-loca
 
 ## Gobernanza por Evidencia (`governance/`)
 
-Skill de Claude Code (`name: gobernanza-por-evidencia`, en `governance/SKILL.md`) que
+Skill de opencode (`name: gobernanza-por-evidencia`, en `governance/SKILL.md`) que
 ejecuta una **revisión de gobernanza basada en evidencia** de un repositorio local.
 Nunca asume: cada hallazgo cita un archivo, comando, documento o commit, con un nivel de
 confianza (`alta`/`media`/`baja`). No toca el código fuente — persiste todo en una
@@ -30,7 +30,7 @@ carpeta `governance/` que genera.
 - Evalúa **deuda técnica** formal (solo en modo `profundo`).
 - Genera un **reporte de gobernanza** (Markdown y, opcionalmente, PDF).
 
-**Cómo se invoca:** desde Claude Code, lanza la skill `gobernanza-por-evidencia`. Antes
+**Cómo se invoca:** desde opencode, invoca la skill `gobernanza-por-evidencia`. Antes
 de escribir nada, te pedirá en un solo bloque cinco entradas:
 
 | Entrada | Opciones |
@@ -57,7 +57,7 @@ governance/
 
 ## Pentesting para Desarrolladores (`security/`)
 
-Plugin de [opencode](https://opencode.ai) que audita la seguridad de **tus propias
+Conjunto de agentes y skills de [opencode](https://opencode.ai) que audita la seguridad de **tus propias
 aplicaciones** desde tu máquina, combinando **revisión de código** (Caja Blanca) y
 **pruebas dinámicas OWASP** (Web, API, chatbots/LLM y workflows/nodos de n8n). Te explica
 cada vulnerabilidad en lenguaje simple y te ayuda a corregirla.
@@ -79,15 +79,15 @@ en una MongoDB local.
 .
 ├── README.md         # este archivo (portada)
 ├── .gitignore
-├── governance/       # skill de Claude Code: gobernanza por evidencia
-└── security/         # plugin de opencode: pentesting local (ver su propio README)
+├── governance/       # skill de opencode: gobernanza por evidencia
+└── security/         # agentes y skills de opencode: pentesting local (ver su propio README)
 ```
 
 ---
 
 ## Requisitos
 
-- **Gobernanza:** [Claude Code](https://claude.com/claude-code) + **Python 3.12** (scripts de apoyo).
+- **Gobernanza:** [opencode](https://opencode.ai) + **Python 3.12** (scripts de apoyo).
 - **Pentesting:** **Docker** + **Docker Compose** y **opencode** — detalle en [`security/README.md`](security/README.md).
 
 ---

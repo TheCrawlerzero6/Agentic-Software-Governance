@@ -22,6 +22,8 @@ The report must declare the configured audience from `governance/governance-conf
 
 - Write the report after strict validation passes.
 - Use only findings already recorded in `governance/`.
+- Do not write the final report while `action-register.md` has insights in `pendiente de decision`.
+- If insights were corrected, postponed, discarded, or handed off, summarize the outcome from `action-register.md`, `change-log.md`, and `interventions/`.
 - Keep inferred items marked as inferred.
 - Keep absences as evidence when the search scope is documented.
 - Do not hide low-confidence findings; explain their confidence.
@@ -35,6 +37,7 @@ The report must declare the configured audience from `governance/governance-conf
 - The first screen of the report must be useful without reading the rest: use `Lectura rapida`, `Semaforo de gobernanza`, and `Decisiones o preguntas que requieren atencion`.
 - Do not fill report sections with generic descriptions of the process. Each row or bullet must cite evidence, name impact, or ask for a concrete decision.
 - Keep deep traceability later in the report. Do not put long source inventories, raw command output, or long path lists in the opening sections.
+- Report generation is a closure action. Ask for closure choice first with `request_user_input`: `Generar reporte Markdown`, `Generar Markdown + PDF`, or `Cerrar sin reporte`. If `request_user_input` is unavailable, stop before generating the report.
 
 ## Opening Sections
 

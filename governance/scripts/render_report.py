@@ -18,6 +18,18 @@ def read_config(governance: Path) -> tuple[str, str]:
     return audience, depth
 
 
+def display_path(path: Path | str, root: Path) -> str:
+    path = Path(path)
+    if not path.is_absolute():
+        path = (root / path).resolve()
+    try:
+        relative = path.resolve().relative_to(root)
+    except ValueError:
+        return "fuera del alcance revisado"
+    text = str(relative).replace("\\", "/")
+    return text or "."
+
+
 def markdown_to_lines(markdown: str, max_chars: int = 96) -> list[str]:
     lines: list[str] = []
     for raw in markdown.splitlines():
@@ -100,13 +112,14 @@ def build_pdf(lines: list[str], title: str) -> bytes:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=".", help="Repository or project root.")
+    parser.add_argument("--quiet", action="store_true", help="Print only the generated PDF path.")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
     governance = root / "governance"
     report = governance / "reports/governance-report.md"
     if not report.exists():
-        print(f"ERROR: missing {report}")
+        print(f"ERROR: missing {display_path(report, root)}")
         return 1
 
     audience, depth = read_config(governance)
@@ -118,7 +131,10 @@ def main() -> int:
     lines = markdown_to_lines(markdown)
     title = f"Governance Report - {audience} - {depth}"
     output.write_bytes(build_pdf(lines, title))
-    print(f"PDF written: {output}")
+    if args.quiet:
+        print(display_path(output, root))
+    else:
+        print(f"PDF written: {display_path(output, root)}")
     return 0
 
 

@@ -6,6 +6,7 @@
 - Operational rules match the selected mode.
 - Scope and exclusions are clear.
 - Credential handling is documented.
+- Paths in chat, evidence, reports, and generated outputs are project-relative; absolute machine paths are not recorded.
 
 ## Evidence Pyramid
 
@@ -35,7 +36,8 @@
 
 - `decisions.md` separates documented, inferred, missing, and contradictory decisions.
 - `decisions.md` separates system decisions from intervention/change decisions; intervention decisions belong in `change-log.md`.
-- Inferred decisions have confidence and a pending validation question.
+- Inferred decisions have evidence, inference reason, confidence, and either a necessary validation question or `Pregunta pendiente: no necesaria`.
+- Inferred decisions with clear written evidence do not force a user question.
 - ADR retrospective entries are suggestions, not final ADRs.
 - User questions are tied to evidence.
 
@@ -52,7 +54,12 @@
 
 - `action-register.md` recommendations cite evidence.
 - `action-register.md` questions include missing context and affected flow.
-- Each insight has a concrete next action or explicit decision state.
+- Questions are contextualized and not batched as more than 3 `request_user_input` questions.
+- Critical choices are not closed through `#question`, free text, or optionless question-tool calls.
+- Critical choices record `Metodo requerido: request_user_input` and allowed options.
+- Each insight has a concrete next action, user decision, result, intervention reference, and final state.
+- Final reports are blocked while insights remain `pendiente de decision`.
+- Closed insights are recorded in `change-log.md` and `interventions/ACT-XXX.md`.
 - `change-log.md` exists for intervention decisions; it may be empty during the base review.
 
 ## Report
@@ -63,4 +70,20 @@
 - Report cites `governance/` files.
 - Report separates confirmed findings, potential specialized evidence, technical debt, and actions.
 - Report does not introduce new findings.
+- Report summarizes selected insight outcomes when interventions exist.
 - Generated PDFs are written under `governance/reports/generated/`.
+
+## Low-Noise Execution
+
+- Routine script commands can be run with `--quiet`.
+- Command details are recorded in evidence files instead of being pasted into chat.
+- Chat output avoids full stdout, long inventories, diffs, repeated commands, and file-by-file change logs unless explicitly requested.
+- Errors remain visible even in quiet mode.
+- Quiet script output uses project-relative paths.
+
+## Single-Agent Execution
+
+- One responsible agent owns the full review.
+- Subagents, plugins, MCP servers, and specialized tools are not installed, configured, or invoked by this skill.
+- Already-available specialized resources may be recorded as handoff/support options; absent resources are recorded as `no disponible`.
+- Background execution is limited to long-running commands or checks when the runtime supports it.

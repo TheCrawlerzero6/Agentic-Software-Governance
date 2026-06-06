@@ -49,6 +49,18 @@ def rel(path: Path, root: Path) -> str:
     return str(path.relative_to(root)).replace("\\", "/")
 
 
+def display_path(path: Path | str, root: Path) -> str:
+    path = Path(path)
+    if not path.is_absolute():
+        path = (root / path).resolve()
+    try:
+        relative = path.resolve().relative_to(root)
+    except ValueError:
+        return "fuera del alcance revisado"
+    text = str(relative).replace("\\", "/")
+    return text or "."
+
+
 def visible_files(root: Path, limit: int) -> list[str]:
     items: list[str] = []
     for path in root.rglob("*"):
@@ -217,12 +229,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=".", help="Repository or project root.")
     parser.add_argument("--max-files", type=int, default=5000)
+    parser.add_argument("--quiet", action="store_true", help="Print only a compact completion summary.")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
     governance = root / "governance"
     if not governance.is_dir():
-        print(f"ERROR: missing {governance}. Run init_governance.py first.")
+        print(f"ERROR: missing {display_path(governance, root)}. Run init_governance.py first.")
         return 1
 
     files = visible_files(root, args.max_files)
@@ -263,8 +276,9 @@ SATD signals:
     doc_body = f"""Documentation candidates:
 {bullet(docs)}
 """
+    git_root_display = display_path(git_root, root) if git_ok else ""
     version_body = (
-        f"Git repository detected at `{git_root}`.\n\nRecent status:\n```text\n{git_status or 'clean or no short status output'}\n```\n\nRecent commits:\n```text\n{git_log or 'no log output'}\n```"
+        f"Git repository detected at `{git_root_display}`.\n\nRecent status:\n```text\n{git_status or 'clean or no short status output'}\n```\n\nRecent commits:\n```text\n{git_log or 'no log output'}\n```"
         if git_ok
         else "Git repository not detected or unavailable from this root."
     )
@@ -384,11 +398,17 @@ SATD signals:
         for name, count in count_map.items()
     ) + "\n\n## Regla\n\nEstas entradas son potenciales y requieren evidencia directa o especialista antes de afirmar un problema confirmado.\n"
 
+    updated: list[str] = []
     for relative, content in {**outputs, **specialized_outputs}.items():
         path = governance / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-        print(f"Updated {path.relative_to(root)}")
+        updated.append(display_path(path, root))
+        if not args.quiet:
+            print(f"Updated {display_path(path, root)}")
+
+    if args.quiet:
+        print(f"Pre-scan evidence updated: {len(updated)} files")
 
     return 0
 

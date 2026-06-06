@@ -109,13 +109,26 @@ def write_once(path: Path, content: str) -> bool:
     return True
 
 
-def build_files(args: argparse.Namespace) -> dict[str, str]:
+def display_path(path: Path | str, root: Path) -> str:
+    path = Path(path)
+    if not path.is_absolute():
+        path = (root / path).resolve()
+    try:
+        relative = path.resolve().relative_to(root)
+    except ValueError:
+        return "fuera del alcance revisado"
+    text = str(relative).replace("\\", "/")
+    return text or "."
+
+
+def build_files(args: argparse.Namespace, root: Path) -> dict[str, str]:
     timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     debt_rule = (
         "Evaluacion formal habilitada. Leer criterios de deuda tecnica antes de registrar TD."
         if args.depth == "profundo"
         else "Evaluacion formal deshabilitada. Registrar solo senales o candidatos sin scoring formal."
     )
+    review_path = display_path(args.review_path, root)
 
     return {
         "README.md": """# Governance
@@ -132,6 +145,7 @@ Base de gobernanza por evidencia para agentes y usuarios.
 - Decisiones tomadas en intervenciones: `change-log.md`
 - Deuda tecnica: `technical-debt.md`
 - Acciones e insights: `action-register.md`
+- Intervenciones seleccionadas: `interventions/`
 - Resumen de cierre: `reports/governance-report.md`
 - PDFs y salidas finales: `reports/generated/`
 - Diagrama de arquitectura: `assets/architecture.dot` y `assets/architecture.png` si se genera.
@@ -142,7 +156,7 @@ La evidencia especializada no confirma amenazas, fallos QA ni incumplimientos si
 
 ## Alcance
 - Tipo: {args.scope}
-- Ruta revisada: {args.review_path}
+- Ruta revisada: {review_path}
 - Exclusiones: {args.exclusions or "pendiente"}
 
 ## Profundidad
@@ -311,6 +325,8 @@ Registrar decisiones que afecten arquitectura, dependencia, flujo principal, per
 | ID | Decision inferida | Categoria | Evidencia | Por que se infiere | Confianza | Pregunta pendiente |
 |---|---|---|---|---|---|---|
 
+Usar `Pregunta pendiente: no necesaria` cuando la evidencia escrita sea suficiente. Preguntar solo si la respuesta humana puede cambiar interpretacion, prioridad, alcance, deuda, handoff especializado o accion.
+
 ## 4. Decisiones faltantes
 
 | ID | Decision faltante | Por que deberia documentarse | Evidencia | Accion sugerida |
@@ -401,32 +417,89 @@ Pendiente.
 **Evidencia especializada relacionada:** SEC-POT / QA-POT / DATA-POT / PERF-POT / COMP-POT / ninguna
 **Contexto faltante:**
 **Pregunta al usuario:**
+**Decision critica:** si
+**Metodo requerido:** request_user_input
+**Opciones permitidas:** pagar ahora / pagar con feature / planificar / aceptar temporalmente / monitorear / rechazar
 **Decision de gestion:** pagar ahora / pagar con feature / planificar / aceptar temporalmente / monitorear / rechazar
 **Fecha de revision:**
 ```
+
+Los campos con listas de valores deben contener solo un valor permitido. No escribir `alto (explicacion)` ni `datos / seguridad`; poner la explicacion en campos narrativos.
 """,
         "action-register.md": """# Action Register
 
 ## Proposito
 
-Registrar insights accionables al final de la revision.
+Registrar insights accionables para seleccion del usuario antes del reporte final.
 
 ## Acciones
 
-| ID | Insight | Tipo | Criticidad | Flujo afectado | Contexto faltante | Pregunta al usuario | Evidencia actual | Siguiente paso | Estado |
-|---|---|---|---|---|---|---|---|---|---|
+| ID | Insight | Tipo | Criticidad | Flujo afectado | Contexto faltante | Pregunta al usuario | Evidencia actual | Siguiente paso | Decision critica | Metodo requerido | Opciones permitidas | Decision usuario | Resultado | Intervencion | Estado final |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 
-## Estados posibles
+## Opciones de decision
 
-- siguiente paso sugerido;
-- requiere decision;
-- requiere especialista;
-- monitorear;
-- documentar decision.
+- Corregir seguro
+- Posponer
+- Descartar
+- Requiere especialista
+
+Para acciones de seguridad o `SEC-POT-*`, no usar `Corregir seguro`; opciones validas: `Requiere especialista`, `Posponer`, `Descartar`.
+
+## Metodo requerido
+
+- Para decisiones criticas: `request_user_input`
+- Para detalles no decisionales: texto libre despues de una seleccion
+
+## Estados finales
+
+- pendiente de decision
+- corregido
+- pospuesto
+- descartado
+- handoff especialista
 
 ## Regla de preguntas
 
 Cada pregunta debe explicar que contexto falta, por que importa, que evidencia existe y que flujo afecta. No usar preguntas genericas como "que hago?".
+""",
+        "interventions/ACT-000-template.md": """# Intervention ACT-XXX
+
+## Insight seleccionado
+
+- ID:
+- Insight:
+- Decision usuario: Corregir seguro / Posponer / Descartar / Requiere especialista
+- Metodo de decision: request_user_input
+- Opciones presentadas:
+- Alcance autorizado:
+
+## Evidencia usada
+
+Pendiente.
+
+## Cambio aplicado o razon de no aplicar
+
+Pendiente.
+
+## Archivos tocados
+
+Pendiente.
+
+## Validacion ejecutada
+
+Pendiente.
+
+## Impacto documental
+
+Pendiente.
+
+## Actualizaciones requeridas
+
+- action-register.md:
+- change-log.md:
+- evidence:
+- report:
 """,
         "reports/governance-report.md": """# Informe de Gobernanza por Evidencia
 
@@ -493,6 +566,7 @@ def main() -> int:
     parser.add_argument("--scope", required=True)
     parser.add_argument("--review-path", default=".")
     parser.add_argument("--exclusions", default="")
+    parser.add_argument("--quiet", action="store_true", help="Print only a compact completion summary.")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
@@ -500,7 +574,7 @@ def main() -> int:
     created: list[str] = []
     skipped: list[str] = []
 
-    for relative, content in build_files(args).items():
+    for relative, content in build_files(args, root).items():
         target = governance_dir / relative
         if write_once(target, content):
             created.append(str(target.relative_to(root)))
@@ -511,14 +585,17 @@ def main() -> int:
         path = governance_dir / relative
         path.mkdir(parents=True, exist_ok=True)
 
-    print(f"Governance directory: {governance_dir}")
-    print(f"Created: {len(created)}")
-    for item in created:
-        print(f"  + {item}")
-    if skipped:
-        print(f"Skipped existing: {len(skipped)}")
-        for item in skipped:
-            print(f"  = {item}")
+    if args.quiet:
+        print(f"Governance initialized: {display_path(governance_dir, root)} (created {len(created)}, skipped {len(skipped)})")
+    else:
+        print(f"Governance directory: {display_path(governance_dir, root)}")
+        print(f"Created: {len(created)}")
+        for item in created:
+            print(f"  + {item}")
+        if skipped:
+            print(f"Skipped existing: {len(skipped)}")
+            for item in skipped:
+                print(f"  = {item}")
     return 0
 
 

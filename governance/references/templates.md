@@ -32,6 +32,7 @@ governance/
     architecture.dot
     architecture.png
   interventions/
+    ACT-000-template.md
 ```
 
 ## governance-config.md
@@ -151,6 +152,7 @@ governance/
 ## 8. Comandos relevantes
 | Comando | Proposito | Resultado resumido |
 |---|---|---|
+Registrar detalles relevantes aqui. En chat, usar resumen compacto y preferir `--quiet` cuando el script lo soporte.
 
 ## 9. Actualizaciones
 ```
@@ -194,6 +196,7 @@ governance/
 ## 3. Decisiones inferidas
 | ID | Decision inferida | Categoria | Evidencia | Por que se infiere | Confianza | Pregunta pendiente |
 |---|---|---|---|---|---|---|
+Usar `Pregunta pendiente: no necesaria` cuando la evidencia escrita sea suficiente. Preguntar solo si la respuesta humana puede cambiar interpretacion, prioridad, alcance, deuda, handoff especializado o accion.
 ## 4. Decisiones faltantes
 | ID | Decision faltante | Por que deberia documentarse | Evidencia | Accion sugerida |
 |---|---|---|---|---|
@@ -255,17 +258,77 @@ governance/
 **Evidencia especializada relacionada:** SEC-POT / QA-POT / DATA-POT / PERF-POT / COMP-POT / ninguna
 **Contexto faltante:**
 **Pregunta al usuario:**
+**Decision critica:** si
+**Metodo requerido:** request_user_input
+**Opciones permitidas:** pagar ahora / pagar con feature / planificar / aceptar temporalmente / monitorear / rechazar
 **Decision de gestion:** pagar ahora / pagar con feature / planificar / aceptar temporalmente / monitorear / rechazar
 **Fecha de revision:**
 ```
+
+Los campos con listas de valores deben contener solo un valor permitido. No escribir `alto (explicacion)` ni `datos / seguridad`; poner la explicacion en campos narrativos.
 
 ## action-register.md
 
 ```md
 # Action Register
 
-| ID | Insight | Tipo | Criticidad | Flujo afectado | Contexto faltante | Pregunta al usuario | Evidencia actual | Siguiente paso | Estado |
-|---|---|---|---|---|---|---|---|---|---|
+## Proposito
+
+Registrar insights accionables para seleccion del usuario antes del reporte final.
+
+## Acciones
+
+| ID | Insight | Tipo | Criticidad | Flujo afectado | Contexto faltante | Pregunta al usuario | Evidencia actual | Siguiente paso | Decision critica | Metodo requerido | Opciones permitidas | Decision usuario | Resultado | Intervencion | Estado final |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+
+## Opciones de decision
+- Corregir seguro
+- Posponer
+- Descartar
+- Requiere especialista
+
+Para acciones de seguridad o `SEC-POT-*`, no usar `Corregir seguro`; opciones validas: `Requiere especialista`, `Posponer`, `Descartar`.
+
+## Metodo requerido
+- Para decisiones criticas: `request_user_input`
+- Para detalles no decisionales: texto libre despues de una seleccion
+
+## Estados finales
+- pendiente de decision
+- corregido
+- pospuesto
+- descartado
+- handoff especialista
+```
+
+## interventions/ACT-000-template.md
+
+```md
+# Intervention ACT-XXX
+
+## Insight seleccionado
+- ID:
+- Insight:
+- Decision usuario: Corregir seguro / Posponer / Descartar / Requiere especialista
+- Metodo de decision: request_user_input
+- Opciones presentadas:
+- Alcance autorizado:
+
+## Evidencia usada
+
+## Cambio aplicado o razon de no aplicar
+
+## Archivos tocados
+
+## Validacion ejecutada
+
+## Impacto documental
+
+## Actualizaciones requeridas
+- action-register.md:
+- change-log.md:
+- evidence:
+- report:
 ```
 
 ## reports/governance-report.md
